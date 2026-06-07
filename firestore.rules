@@ -1,0 +1,46 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Users collection: Allow users to read and update their own profile
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Manager Inbox collection
+    match /managerInbox/{docId} {
+      // Allow any authenticated user to create an inbox item
+      allow create: if request.auth != null;
+      // Allow managers and requesters to read the inbox item
+      allow read: if request.auth != null && (request.auth.uid == resource.data.targetManagerUid || request.auth.uid == resource.data.userId);
+      // Allow managers to update and delete their own inbox items
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.targetManagerUid;
+    }
+
+    // Allowed Requesters collection
+    match /allowedRequesters/{docId} {
+      // Allow all authenticated users to read (requesters need this to check if they are allowed)
+      allow read: if request.auth != null;
+      // Allow managers to add allowed requesters
+      allow write: if request.auth != null; 
+    }
+
+    // Specifically allow rules for the pendingPurchases collection
+    match /pendingPurchases/{docId} {
+      // Allow any logged-in user to create a new purchase list
+      allow create: if request.auth != null;
+      
+      // Allow users to read only their own purchase lists
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      
+      // Allow the Cloud Function (admin) to update the status/logs
+      allow update: if request.auth != null; 
+    }
+    
+    // Default deny for everything else
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

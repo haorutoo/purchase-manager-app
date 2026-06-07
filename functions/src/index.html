@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Purchase Manager AI</title>
+  <script type="module">
+    // Import Firebase SDKs
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+    apiKey: "AIzaSyAuXniNlbJu1KedetTErtpberH5Hk4zfso",
+    authDomain: "somnia-purchase-manager.firebaseapp.com",
+    projectId: "somnia-purchase-manager",
+    storageBucket: "somnia-purchase-manager.firebasestorage.app",
+    messagingSenderId: "37142484496",
+    appId: "1:37142484496:web:69efc635085a46465fdc95",
+    measurementId: "G-VG7GE28W0X"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // UI Elements
+    const authDiv = document.getElementById('auth-section');
+    const appDiv = document.getElementById('app-section');
+    const userEmailSpan = document.getElementById('user-email');
+
+    // Listen for Auth State Changes
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        authDiv.style.display = 'none';
+        appDiv.style.display = 'block';
+        userEmailSpan.innerText = user.email;
+      } else {
+        authDiv.style.display = 'block';
+        appDiv.style.display = 'none';
+      }
+    });
+
+    // Login
+    window.login = async () => {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        alert("Login failed: " + error.message);
+      }
+    };
+
+    // Sign Up
+    window.signup = async () => {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        alert("Signup failed: " + error.message);
+      }
+    };
+
+    // Logout
+    window.logout = () => signOut(auth);
+
+    // Submit Purchase List to trigger your Cloud Function!
+    window.submitList = async () => {
+      const items = document.getElementById('items').value;
+      const user = auth.currentUser;
+
+      if (!items || !user) return;
+
+      try {
+        // This writes to Firestore, which immediately triggers invokeTrigger.ts!
+        const docRef = await addDoc(collection(db, "pendingPurchases"), {
+          items: items,
+          userId: user.uid,
+          userEmail: user.email,
+          createdAt: new Date()
+        });
+        alert(`Success! Document created with ID: ${docRef.id}\nThe AI Agent is processing it!`);
+        document.getElementById('items').value = ''; // Clear input
+      } catch (error) {
+        alert("Failed to submit list: " + error.message);
+      }
+    };
+  </script>
+</head>
+<body style="font-family: sans-serif; padding: 20px;">
+
+  <h1>Somnia AI Purchase Manager</h1>
+
+  <!-- Authentication Section -->
+  <div id="auth-section">
+    <h3>Login or Sign Up</h3>
+    <input type="email" id="email" placeholder="Email" /><br><br>
+    <input type="password" id="password" placeholder="Password" /><br><br>
+    <button onclick="login()">Login</button>
+    <button onclick="signup()">Sign Up</button>
+  </div>
+
+  <!-- App Section (Hidden until logged in) -->
+  <div id="app-section" style="display: none;">
+    <p>Logged in as: <b id="user-email"></b> <button onclick="logout()">Logout</button></p>
+    
+    <h3>Submit a Purchase List</h3>
+    <textarea id="items" rows="4" cols="50" placeholder="e.g., 2 ergonomic office chairs, 1 luxury massage chair"></textarea><br><br>
+    <button onclick="submitList()">Send to AI Auditor</button>
+  </div>
+
+</body>
+</html>

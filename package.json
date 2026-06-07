@@ -1,0 +1,22 @@
+{
+  "name": "purchase-manager-app",
+  "version": "1.0.0",
+  "description": "Somnia AI Purchase Manager self-contained project",
+  "private": true,
+  "scripts": {
+    "compile": "hardhat compile",
+    "deploy": "hardhat run scripts/deploy.ts --network somnia",
+    "build:functions": "cd functions && npm run build"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "5.0.0",
+    "@nomicfoundation/hardhat-viem": "2.0.6",
+    "dotenv": "16.5.0",
+    "hardhat": "^2.28.0",
+    "ts-node": "10.9.2",
+    "typescript": "5.8.3"
+  },
+  "dependencies": {
+    "ethers": "^6.16.0"
+  }
+}
