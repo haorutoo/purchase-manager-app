@@ -76,13 +76,21 @@
           contract.friendlyPolicyRules().catch(() => "Not Set")
         ]);
         
-        // Clean the friendly policy rules of any standard LLM conversational intro
+        // Clean the friendly policy rules of any standard LLM conversational intro and headers
         let cleanedFriendly = friendly;
         if (cleanedFriendly && cleanedFriendly !== "Not Set") {
+          // Remove conversational preambles
           cleanedFriendly = cleanedFriendly
             .replace(/^(Sure!|Here's|Here is|Sure,|Alright|Welcoming).*?rewrite.*?:/is, "")
             .replace(/^(Sure!|Here's|Here is|Sure,|Alright|Welcoming).*?rules.*?:/is, "")
             .replace(/^(Sure!|Here's|Here is|Sure,|Alright|Welcoming).*?procurement.*?:/is, "")
+            .trim();
+          
+          // Remove guidelines/policy header titles like "**Our Procurement Guidelines**"
+          cleanedFriendly = cleanedFriendly
+            .replace(/^\**Our Procurement Guidelines\**\s*/i, "")
+            .replace(/^\**Procurement Guidelines\**\s*/i, "")
+            .replace(/^\**Corporate Procurement Policy\**\s*/i, "")
             .trim();
         }
 
