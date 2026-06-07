@@ -2,6 +2,9 @@
 <html>
 <head>
   <title>Purchase Manager AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { 
@@ -259,12 +262,12 @@
       const statusDiv = document.getElementById('update-policy-status');
       
       if (!policy) {
-        statusDiv.style.color = '#dc3545';
+        statusDiv.className = 'status-msg danger';
         statusDiv.innerText = 'Please enter policy rules.';
         return;
       }
       
-      statusDiv.style.color = '#17a2b8';
+      statusDiv.className = 'status-msg info';
       statusDiv.innerText = 'Updating policy on blockchain... (This may take a few seconds)';
       
       try {
@@ -272,17 +275,17 @@
         const result = await updatePolicyCallable({ policy: policy });
         
         if (result.data.success) {
-          statusDiv.style.color = '#28a745';
+          statusDiv.className = 'status-msg success';
           statusDiv.innerText = `Policy updated successfully!`;
           document.getElementById('new-policy-rules').value = '';
           // Refresh the policy rules from the blockchain to show the new ones
           setTimeout(fetchCurrentPolicy, 5000);
         } else {
-          statusDiv.style.color = '#dc3545';
+          statusDiv.className = 'status-msg danger';
           statusDiv.innerText = 'Failed to update policy.';
         }
       } catch (error) {
-        statusDiv.style.color = '#dc3545';
+        statusDiv.className = 'status-msg danger';
         statusDiv.innerText = `Error: ${error.message}`;
       }
     };
@@ -342,7 +345,7 @@
       const resultsDiv = document.getElementById(`deals-${docId}-${itemIndex}`);
       if (!resultsDiv) return;
       
-      resultsDiv.innerHTML = '<span style="color: #666; font-size: 0.9em;">Searching web for best prices...</span>';
+      resultsDiv.innerHTML = '<span style="color: var(--text-secondary); font-size: 0.9em; font-style: italic;">Searching web for best prices...</span>';
       
       try {
         const searchPricesCallable = httpsCallable(functions, 'searchPrices');
@@ -350,22 +353,22 @@
         const results = response.data.results;
         
         if (results && results.length > 0) {
-          let html = '<div style="background: #eef7ff; padding: 10px; border-radius: 4px; margin-top: 8px; font-size: 0.9em; border: 1px solid #b8daff;">';
-          html += '<strong>Lowest Prices Found:</strong><ul style="margin: 5px 0; padding-left: 20px;">';
+          let html = '<div class="deal-box">';
+          html += '<strong style="color: var(--text-primary);">Lowest Prices Found:</strong><ul class="deal-list">';
           results.forEach(deal => {
-            html += `<li style="margin-bottom: 4px;">
-              <b>${deal.seller}</b>: ${deal.price} 
-              <a href="${deal.url}" target="_blank" style="margin-left: 10px; color: #007bff; text-decoration: none;">[Buy Here]</a>
+            html += `<li>
+              <span class="deal-seller">${deal.seller}</span>: <span class="deal-price">${deal.price}</span> 
+              <a href="${deal.url}" target="_blank" class="deal-link">[Buy Here]</a>
             </li>`;
           });
           html += '</ul></div>';
           resultsDiv.innerHTML = html;
         } else {
-          resultsDiv.innerHTML = '<span style="color: #dc3545; font-size: 0.9em;">No deals found.</span>';
+          resultsDiv.innerHTML = '<span style="color: var(--color-danger); font-size: 0.9em; font-weight: 500;">No deals found.</span>';
         }
       } catch (error) {
         console.error(error);
-        resultsDiv.innerHTML = `<span style="color: #dc3545; font-size: 0.9em;">Search failed: ${error.message}</span>`;
+        resultsDiv.innerHTML = `<span style="color: var(--color-danger); font-size: 0.9em; font-weight: 500;">Search failed: ${error.message}</span>`;
       }
     };
 
@@ -389,36 +392,39 @@
             const date = data.submittedAt ? data.submittedAt.toDate().toLocaleString() : 'Just now';
             const userDisplay = data.userEmail || data.userPhone || data.userId;
             
-            html += `<div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px; background: #fff;">`;
-            html += `<strong style="color:#007bff;">Requester:</strong> ${userDisplay} <br>`;
-            html += `<strong>Submitted:</strong> ${date} <br>`;
-            html += `<strong>Status:</strong> ${data.status} <br><br>`;
-            html += `<strong>Approved Items (Check to mark as ordered):</strong><ul style="list-style: none; padding-left: 0;">`;
+            html += `<div class="inbox-card">`;
+            html += `<div class="inbox-header">`;
+            html += `<div><span class="inbox-label">Requester:</span> <span class="inbox-value">${userDisplay}</span></div>`;
+            html += `<div><span class="inbox-label">Submitted:</span> <span class="inbox-value">${date}</span></div>`;
+            html += `<div><span class="status-badge status-pending">${data.status}</span></div>`;
+            html += `</div>`;
+            html += `<div class="inbox-items-title">Approved Items (Check to mark as ordered):</div>`;
+            html += `<ul class="inbox-items-list">`;
             if(data.items && Array.isArray(data.items)) {
               data.items.forEach((item, index) => {
                 const isChecked = item.purchased ? 'checked' : '';
-                html += `<li style="margin-bottom: 12px; padding: 10px; border: 1px solid #eee; border-radius: 4px; background: #fafafa;">
-                  <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <div style="display: flex; align-items: start; gap: 8px;">
-                      <input type="checkbox" id="chk-${id}-${index}" onchange="toggleItemPurchased('${id}', ${index}, this.checked)" ${isChecked} style="cursor: pointer; margin-top: 3px;">
-                      <label for="chk-${id}-${index}" style="cursor: pointer; flex: 1; font-weight: bold;">
+                html += `<li class="inbox-item-row ${item.purchased ? 'purchased' : ''}">
+                  <div class="inbox-item-layout">
+                    <div class="checkbox-container">
+                      <input type="checkbox" id="chk-${id}-${index}" onchange="toggleItemPurchased('${id}', ${index}, this.checked)" ${isChecked} class="custom-checkbox">
+                      <label for="chk-${id}-${index}" class="checkbox-label">
                         ${item.item}
                       </label>
                     </div>
-                    <div style="padding-left: 24px;">
-                      <i style="color: #666; font-size: 0.9em;">Reason: ${item.reason}</i>
+                    <div class="inbox-item-details">
+                      <div class="item-reason">Reason: ${item.reason}</div>
                       
                       ${item.purchased ? `
-                        <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
-                          <span style="font-size: 0.9em; font-weight: bold; color: #495057;">Est. Delivery:</span>
-                          <input type="date" value="${item.estimatedDelivery || ''}" onchange="updateItemDeliveryDate('${id}', ${index}, this.value)" style="padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95em;">
+                        <div class="delivery-date-picker">
+                          <label>Est. Delivery:</label>
+                          <input type="date" value="${item.estimatedDelivery || ''}" onchange="updateItemDeliveryDate('${id}', ${index}, this.value)" class="custom-date-input">
                         </div>
                       ` : ''}
                       
-                      <div style="margin-top: 8px;">
-                        <button onclick="findDeals('${item.item.replace(/'/g, "\\'")}', '${id}', ${index})" style="background: #17a2b8; padding: 4px 8px; font-size: 0.85em;">🔍 Find Deals</button>
+                      <div class="find-deals-container">
+                        <button onclick="findDeals('${item.item.replace(/'/g, "\\'")}', '${id}', ${index})" class="btn btn-info btn-xs">🔍 Find Deals</button>
                       </div>
-                      <div id="deals-${id}-${index}" style="margin-top: 5px;"></div>
+                      <div id="deals-${id}-${index}" class="deals-results-wrapper"></div>
                     </div>
                   </div>
                 </li>`;
@@ -492,25 +498,25 @@
 
         let html = '';
         
-        html += `<h4 style="color: #28a745;">📦 Ordered Items</h4>`;
+        html += `<h4 class="status-section-header header-success">📦 Ordered Items</h4>`;
         if (fulfilledItems.length === 0) {
-          html += `<p style="color: #666; font-size: 0.9em;">No ordered items yet.</p>`;
+          html += `<p class="empty-status-text">No ordered items yet.</p>`;
         } else {
-          html += `<ul>`;
+          html += `<ul class="status-items-list">`;
           fulfilledItems.forEach(item => {
-            const dateStr = item.estimatedDelivery ? `<span style="color: #28a745; font-weight: bold;">(Est. Arrival: ${item.estimatedDelivery})</span>` : `<span style="color: #6c757d;">(Awaiting delivery estimate)</span>`;
-            html += `<li style="margin-bottom: 6px;"><b>${item.item}</b> ${dateStr} <span style="font-size: 0.85em; color: #888;">- Request date: ${item.submittedAt}</span></li>`;
+            const dateStr = item.estimatedDelivery ? `<span class="delivery-arrival-date">Est. Arrival: ${item.estimatedDelivery}</span>` : `<span class="delivery-arrival-waiting">Awaiting delivery estimate</span>`;
+            html += `<li><span class="status-item-name">${item.item}</span> ${dateStr} <span class="status-item-date">Request date: ${item.submittedAt}</span></li>`;
           });
           html += `</ul>`;
         }
 
-        html += `<h4 style="color: #dc3545; margin-top: 20px;">⏳ Pending Order</h4>`;
+        html += `<h4 class="status-section-header header-pending">⏳ Pending Order</h4>`;
         if (unfulfilledItems.length === 0) {
-          html += `<p style="color: #666; font-size: 0.9em;">No pending items.</p>`;
+          html += `<p class="empty-status-text">No pending items.</p>`;
         } else {
-          html += `<ul>`;
+          html += `<ul class="status-items-list">`;
           unfulfilledItems.forEach(item => {
-            html += `<li style="margin-bottom: 6px;"><b>${item.item}</b> <span style="font-size: 0.85em; color: #888;">- Request date: ${item.submittedAt}</span></li>`;
+            html += `<li><span class="status-item-name">${item.item}</span> <span class="status-item-date">Request date: ${item.submittedAt}</span></li>`;
           });
           html += `</ul>`;
         }
@@ -585,28 +591,32 @@
 
       window.cart.push(...approved);
 
-      let html = `<h3>AI Auditor Results</h3>`;
+      let html = `<h3 class="results-main-title">AI Auditor Results</h3>`;
 
       if (approved.length > 0) {
-        html += `<h4>✅ Approved Items (Added to Cart)</h4><ul>`;
+        html += `<h4 class="results-subtitle approved-title">✅ Approved Items (Added to Cart)</h4><ul class="results-list approved-list">`;
         approved.forEach(item => {
-          html += `<li><b>${item.item}</b><br><i>Reason: ${item.reason}</i></li>`;
+          html += `<li><div class="result-item-name">${item.item}</div><div class="result-item-reason">Reason: ${item.reason}</div></li>`;
         });
         html += `</ul>`;
       }
 
       if (rejected.length > 0) {
-        html += `<h4>❌ Rejected Items</h4><ul>`;
+        html += `<h4 class="results-subtitle rejected-title">❌ Rejected Items</h4><ul class="results-list rejected-list">`;
         rejected.forEach(item => {
-          html += `<li><b>${item.item}</b><br><i>Reason: ${item.reason}</i></li>`;
+          html += `<li><div class="result-item-name">${item.item}</div><div class="result-item-reason">Reason: ${item.reason}</div></li>`;
         });
         html += `</ul>`;
       }
 
-      html += `<h4>🛒 Current Approved Cart Size: ${window.cart.length} items</h4>`;
-      html += `<button onclick="sendToManager()">Send Approved Items to Selected Manager</button> `;
-      html += `<button onclick="addMoreItems()">Request Additional Items</button>`;
-      html += `<br><br><button onclick="clearCart()" style="color: #d9534f; background: transparent; border: 1px solid #d9534f; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Clear Cart & Start Over</button>`;
+      html += `<div class="cart-summary-text">🛒 Current Approved Cart Size: <strong>${window.cart.length}</strong> items</div>`;
+      html += `<div class="action-buttons-group">`;
+      html += `<button onclick="sendToManager()" class="btn btn-success">Send Approved Items to Selected Manager</button> `;
+      html += `<button onclick="addMoreItems()" class="btn btn-outline">Request Additional Items</button>`;
+      html += `</div>`;
+      html += `<div class="danger-zone-inline">`;
+      html += `<button onclick="clearCart()" class="btn btn-danger-link">Clear Cart & Start Over</button>`;
+      html += `</div>`;
 
       resultsDiv.innerHTML = html;
       document.getElementById('items').value = '';
@@ -655,14 +665,732 @@
     };
   </script>
   <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; background: #fafafa; }
-    h1 { color: #333; }
-    .card { background: white; border: 1px solid #ddd; padding: 25px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .section-title { border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }
-    input[type="text"], input[type="email"], input[type="password"] { padding: 10px; margin: 5px 0; width: 100%; max-width: 300px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-    button { padding: 10px 18px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; font-weight: bold; margin-top: 5px; }
-    button:hover { background: #0056b3; }
-    textarea { width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: sans-serif; }
+    :root {
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      
+      /* Subtle light theme colors */
+      --bg-canvas: #f8fafc;
+      --bg-card: #ffffff;
+      
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      
+      --border-color: #e2e8f0;
+      --border-focus: #94a3b8;
+      
+      --color-primary: #5c6f84;
+      --color-primary-hover: #4a596b;
+      --color-primary-light: #f1f5f9;
+      
+      --color-success: #6b8f71;
+      --color-success-hover: #57755c;
+      --color-success-bg: #f3f7f4;
+      --color-success-border: #e2ede4;
+      
+      --color-info: #708090;
+      --color-info-hover: #5c6a78;
+      --color-info-bg: #f0f4f8;
+      --color-info-border: #d9e2ec;
+      
+      --color-danger: #b07d7d;
+      --color-danger-hover: #9c6c6c;
+      --color-danger-bg: #fbf2f2;
+      --color-danger-border: #f5e3e3;
+      
+      --color-warning: #b7966b;
+      --color-warning-hover: #9e815a;
+      --color-warning-bg: #faf4eb;
+      --color-warning-border: #f5e9d9;
+
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.03), 0 4px 6px -4px rgba(0, 0, 0, 0.03);
+      --shadow-indigo: 0 10px 15px -3px rgba(92, 111, 132, 0.05);
+      
+      --transition-fast: 0.15s ease;
+      --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-canvas);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 40px 20px;
+      max-width: 768px;
+      margin: 0 auto;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    h1, h2, h3, h4 {
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      margin-top: 0;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      text-align: center;
+      margin-bottom: 40px;
+      color: var(--color-primary);
+      font-weight: 700;
+    }
+
+    h2 {
+      font-size: 1.35rem;
+      margin-bottom: 20px;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      margin-bottom: 15px;
+      color: var(--text-secondary);
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 32px;
+      border-radius: 12px;
+      margin-bottom: 28px;
+      box-shadow: var(--shadow-indigo);
+      transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+    }
+    .card:hover {
+      box-shadow: 0 12px 20px -5px rgba(92, 111, 132, 0.07);
+    }
+    
+    .section-title {
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Input Controls */
+    input[type="text"], input[type="email"], input[type="password"], select, textarea {
+      font-family: var(--font-sans);
+      width: 100%;
+      padding: 12px 16px;
+      margin: 8px 0 20px 0;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+      background-color: var(--bg-canvas);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+    }
+    
+    input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      background-color: #fff;
+      box-shadow: 0 0 0 3px rgba(92, 111, 132, 0.1);
+    }
+
+    input::placeholder, textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    /* Buttons */
+    .btn {
+      font-family: var(--font-sans);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: background-color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+      text-decoration: none;
+      gap: 6px;
+    }
+    
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background-color: var(--color-primary);
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background-color: var(--color-primary-hover);
+    }
+
+    .btn-success {
+      background-color: var(--color-success);
+      color: #fff;
+    }
+    .btn-success:hover {
+      background-color: var(--color-success-hover);
+    }
+
+    .btn-info {
+      background-color: var(--color-info);
+      color: #fff;
+    }
+    .btn-info:hover {
+      background-color: var(--color-info-hover);
+    }
+
+    .btn-danger {
+      background-color: var(--color-danger);
+      color: #fff;
+    }
+    .btn-danger:hover {
+      background-color: var(--color-danger-hover);
+    }
+
+    .btn-secondary {
+      background-color: var(--color-info-bg);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+    .btn-secondary:hover {
+      background-color: var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+    }
+    .btn-outline:hover {
+      background: var(--bg-canvas);
+      border-color: var(--border-focus);
+      color: var(--text-primary);
+    }
+
+    .btn-danger-link {
+      background: transparent;
+      border: 1px solid var(--color-danger);
+      color: var(--color-danger);
+    }
+    .btn-danger-link:hover {
+      background: var(--color-danger-bg);
+      color: var(--color-danger-hover);
+    }
+
+    .btn-xs {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+    }
+
+    /* Auth layout */
+    .auth-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
+    @media (max-width: 640px) {
+      .auth-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+      }
+      .auth-divider {
+        display: none !important;
+      }
+    }
+    
+    .auth-col {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .auth-divider {
+      border-left: 1px solid var(--border-color);
+      padding-left: 40px;
+    }
+
+    /* App Header Status Bar */
+    .app-header {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      padding: 16px 24px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+      box-shadow: var(--shadow-sm);
+    }
+    @media (max-width: 600px) {
+      .app-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      .header-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
+    }
+
+    .user-info {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+    .user-info b {
+      color: var(--text-primary);
+    }
+    
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    /* Policy Info boxes */
+    .policy-box {
+      background-color: var(--color-primary-light);
+      border: 1px solid var(--border-color);
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 24px;
+    }
+
+    .policy-box-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .policy-rules-display {
+      background: #fff;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      white-space: pre-wrap;
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: var(--text-secondary);
+      margin: 6px 0 12px 0;
+    }
+
+    /* Status badges */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      border-radius: 9999px;
+      text-transform: capitalize;
+    }
+
+    .status-badge.status-pending {
+      background-color: var(--color-warning-bg);
+      color: var(--color-warning-hover);
+      border: 1px solid var(--color-warning-border);
+    }
+
+    /* Form Fields spacing helper */
+    .field-group {
+      margin-bottom: 20px;
+    }
+    .field-group label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    /* List styling */
+    .inbox-card {
+      border: 1px solid var(--border-color);
+      padding: 20px;
+      margin-bottom: 16px;
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .inbox-header {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 16px;
+      font-size: 0.9rem;
+    }
+    
+    .inbox-label {
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    
+    .inbox-value {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .inbox-items-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--text-secondary);
+    }
+
+    .inbox-items-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0;
+    }
+
+    .inbox-item-row {
+      margin-bottom: 12px;
+      padding: 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--bg-canvas);
+      transition: border-color var(--transition-fast), background-color var(--transition-fast);
+    }
+
+    .inbox-item-row.purchased {
+      border-color: var(--color-success-border);
+      background-color: var(--color-success-bg);
+    }
+
+    .inbox-item-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .custom-checkbox {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border-color);
+      border-radius: 4px;
+      cursor: pointer;
+      accent-color: var(--color-success);
+    }
+
+    .checkbox-label {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+    }
+
+    .inbox-item-details {
+      padding-left: 28px;
+    }
+
+    .item-reason {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      font-style: italic;
+      margin-bottom: 8px;
+    }
+
+    .delivery-date-picker {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #ffffff;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      max-width: max-content;
+    }
+    
+    .delivery-date-picker label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .custom-date-input {
+      padding: 4px 8px !important;
+      margin: 0 !important;
+      font-size: 0.85rem !important;
+      width: auto !important;
+      border-radius: 4px !important;
+    }
+
+    .find-deals-container {
+      margin-top: 12px;
+    }
+
+    .deals-results-wrapper {
+      margin-top: 8px;
+    }
+
+    .deal-box {
+      background: var(--color-info-bg);
+      padding: 14px;
+      border-radius: 8px;
+      margin-top: 10px;
+      font-size: 0.85rem;
+      border: 1px solid var(--color-info-border);
+      color: var(--text-secondary);
+    }
+
+    .deal-list {
+      margin: 6px 0 0 0;
+      padding-left: 20px;
+    }
+
+    .deal-seller {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .deal-price {
+      font-weight: 600;
+      color: var(--color-success-hover);
+    }
+
+    .deal-link {
+      margin-left: 10px;
+      color: var(--color-primary);
+      text-decoration: underline;
+      font-weight: 500;
+    }
+    .deal-link:hover {
+      color: var(--color-primary-hover);
+    }
+
+    /* Requester Status list in dashboard */
+    .status-section-header {
+      font-size: 1rem;
+      margin-top: 24px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .header-success {
+      color: var(--color-success);
+    }
+    
+    .header-pending {
+      color: var(--color-danger);
+    }
+
+    .empty-status-text {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-style: italic;
+      margin-left: 4px;
+    }
+
+    .status-items-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 20px 0;
+    }
+    
+    .status-items-list li {
+      padding: 12px 16px;
+      background: var(--bg-canvas);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .status-item-name {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .status-item-date {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .delivery-arrival-date {
+      color: var(--color-success);
+      font-weight: 600;
+      font-size: 0.85rem;
+      background-color: var(--color-success-bg);
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--color-success-border);
+    }
+
+    .delivery-arrival-waiting {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-style: italic;
+    }
+
+    /* AI auditing spinner and layout */
+    .audit-spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid var(--border-color);
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 24px auto;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .audit-trail-container {
+      margin-top: 24px;
+      padding: 20px;
+      background: var(--bg-canvas);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      max-height: 250px;
+      overflow-y: auto;
+      font-family: var(--font-sans);
+      font-size: 0.85rem;
+    }
+
+    .audit-trail-title {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      font-size: 0.9rem;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 6px;
+    }
+
+    /* Results section styles */
+    .results-main-title {
+      font-size: 1.25rem;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+    }
+
+    .results-subtitle {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+    
+    .approved-title {
+      color: var(--color-success);
+    }
+    
+    .rejected-title {
+      color: var(--color-danger);
+    }
+
+    .results-list {
+      list-style: none;
+      padding-left: 0;
+      margin: 0 0 20px 0;
+    }
+
+    .results-list li {
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 8px;
+      background: var(--bg-canvas);
+    }
+
+    .approved-list li {
+      border-color: var(--color-success-border);
+      background-color: var(--color-success-bg);
+    }
+
+    .rejected-list li {
+      border-color: var(--color-danger-border);
+      background-color: var(--color-danger-bg);
+    }
+
+    .result-item-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 0.9rem;
+    }
+
+    .result-item-reason {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    .cart-summary-text {
+      font-size: 0.95rem;
+      margin: 24px 0;
+      padding: 12px 16px;
+      background-color: var(--color-primary-light);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      display: inline-block;
+    }
+
+    .action-buttons-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .danger-zone-inline {
+      border-top: 1px solid var(--border-color);
+      padding-top: 20px;
+      margin-top: 20px;
+    }
+
+    /* Small helpers */
+    .status-msg {
+      margin-top: 10px;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .status-msg.success { color: var(--color-success); }
+    .status-msg.info { color: var(--color-info); }
+    .status-msg.danger { color: var(--color-danger); }
+
+    .dashboard-panel {
+      background: var(--color-primary-light);
+      border: 1px solid var(--border-color);
+      padding: 24px;
+      border-radius: 10px;
+      margin-bottom: 24px;
+    }
   </style>
 </head>
 <body>
@@ -673,41 +1401,41 @@
   <div id="auth-section" class="card">
     <h2 class="section-title">Welcome</h2>
     
-
-    
-    <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+    <div class="auth-grid">
       <!-- Email Auth -->
-      <div style="flex: 1; min-width: 250px;">
+      <div class="auth-col">
         <h3>Login / Sign Up via Email</h3>
-        <input type="email" id="email" placeholder="Email" /><br>
-        <input type="password" id="password" placeholder="Password" /><br>
-        <button onclick="loginEmail()">Login</button>
-        <button onclick="signupEmail()" style="background: #28a745;">Sign Up</button>
+        <input type="email" id="email" placeholder="Email" />
+        <input type="password" id="password" placeholder="Password" />
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <button onclick="loginEmail()" class="btn btn-primary">Login</button>
+          <button onclick="signupEmail()" class="btn btn-success">Sign Up</button>
+        </div>
       </div>
 
       <!-- Phone Auth -->
-      <div style="flex: 1; min-width: 250px; border-left: 1px solid #eee; padding-left: 30px;">
+      <div class="auth-col auth-divider">
         <h3>Login / Sign Up via Phone</h3>
-        <p style="font-size: 12px; color: #666; margin-top: 0;">(Requires Firebase Phone Auth enabled)</p>
-        <input type="text" id="phone" placeholder="Phone (e.g. +1234567890)" /><br>
+        <p style="font-size: 12px; color: #666; margin: 0 0 10px 0;">(Requires Firebase Phone Auth enabled)</p>
+        <input type="text" id="phone" placeholder="Phone (e.g. +1234567890)" />
         <div id="recaptcha-container" style="margin: 10px 0;"></div>
-        <button onclick="sendOTP()">Send SMS OTP</button>
+        <button onclick="sendOTP()" class="btn btn-primary" style="align-self: flex-start;">Send SMS OTP</button>
         
         <div id="otp-section" style="display: none; margin-top: 15px;">
-          <input type="text" id="otp" placeholder="6-digit OTP code" /><br>
-          <button onclick="verifyOTP()">Verify Code & Login</button>
+          <input type="text" id="otp" placeholder="6-digit OTP code" />
+          <button onclick="verifyOTP()" class="btn btn-success" style="align-self: flex-start;">Verify Code & Login</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- App Header -->
-  <div id="app-section" style="display: none; margin-bottom: 20px;">
-    <div style="background: #e9ecef; padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
-      <span>Logged in as: <b id="user-email"></b> (Role: <span id="user-role-display" style="text-transform: capitalize; font-weight: bold;"></span>)</span>
-      <div style="display: flex; gap: 10px; align-items: center;">
-        <button id="role-toggle-btn" onclick="toggleUserRole()" style="background: #17a2b8; padding: 6px 12px; margin-top: 0;">Switch Role</button>
-        <button onclick="logout()" style="background: #dc3545; padding: 6px 12px; margin-top: 0;">Logout</button>
+  <div id="app-section" style="display: none;">
+    <div class="app-header">
+      <span class="user-info">Logged in as: <b id="user-email"></b> (Role: <span id="user-role-display" style="text-transform: capitalize; font-weight: bold;"></span>)</span>
+      <div class="header-actions">
+        <button id="role-toggle-btn" onclick="toggleUserRole()" class="btn btn-info btn-xs">Switch Role</button>
+        <button onclick="logout()" class="btn btn-danger btn-xs">Logout</button>
       </div>
     </div>
   </div>
@@ -716,37 +1444,41 @@
   <div id="manager-section" class="card" style="display: none;">
     <h2 class="section-title">Manager Dashboard</h2>
     
-    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #e9ecef;">
-      <h3 style="margin-top: 0;">Current Active Policy</h3>
+    <div class="dashboard-panel">
+      <h3 style="margin-top: 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <span>Current Active Policy</span>
+        <button onclick="fetchCurrentPolicy()" class="btn btn-outline btn-xs">🔄 Refresh Policy</button>
+      </h3>
       <div style="margin-bottom: 15px;">
-        <strong>Strict Policy Rules (used by AI Auditor):</strong>
-        <pre id="current-policy-rules" style="background: #fff; padding: 10px; border-radius: 4px; border: 1px solid #ddd; white-space: pre-wrap; font-family: inherit; font-size: 0.95em; margin-top: 5px;">Loading...</pre>
+        <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Strict Policy Rules (used by AI Auditor):</label>
+        <pre id="current-policy-rules" class="policy-rules-display">Loading...</pre>
       </div>
       <div>
-        <strong>Friendly Procurement Policy (shown to employees):</strong>
-        <pre id="current-friendly-policy" style="background: #fff; padding: 10px; border-radius: 4px; border: 1px solid #ddd; white-space: pre-wrap; font-family: inherit; font-size: 0.95em; margin-top: 5px;">Loading...</pre>
+        <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Friendly Procurement Policy (shown to employees):</label>
+        <pre id="current-friendly-policy" class="policy-rules-display">Loading...</pre>
       </div>
-      <button onclick="fetchCurrentPolicy()" style="background: #6c757d; font-size: 0.85em; padding: 6px 12px; margin-top: 5px;">🔄 Refresh Policy from Chain</button>
     </div>
     
-    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #e9ecef;">
+    <div class="dashboard-panel">
       <h3 style="margin-top: 0;">Update Purchase Policy</h3>
-      <p style="margin-bottom: 10px;">Set the rules that the AI Auditor will use to approve or reject requests.</p>
+      <p style="margin-bottom: 12px; font-size: 0.9rem; color: var(--text-secondary);">Set the rules that the AI Auditor will use to approve or reject requests.</p>
       <textarea id="new-policy-rules" rows="4" placeholder="e.g., Only approve ergonomic chairs under $200. Reject all luxury items."></textarea>
-      <button onclick="updatePolicy()" style="background: #17a2b8; margin-top: 10px;">Update Policy</button>
-      <div id="update-policy-status" style="margin-top: 10px; font-weight: bold;"></div>
+      <button onclick="updatePolicy()" class="btn btn-info" style="margin-top: 10px;">Update Policy</button>
+      <div id="update-policy-status" class="status-msg"></div>
     </div>
 
-    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 1px solid #e9ecef;">
+    <div class="dashboard-panel">
       <h3 style="margin-top: 0;">Invite a Requester</h3>
-      <p style="margin-bottom: 10px;">Authorize an employee to submit purchase requests to your inbox.</p>
-      <input type="text" id="new-requester-identifier" placeholder="Email or Phone Number">
-      <button onclick="addRequester()" style="background: #28a745;">Add Requester</button>
-      <div id="add-requester-status" style="color: #28a745; margin-top: 10px; font-weight: bold;"></div>
+      <p style="margin-bottom: 12px; font-size: 0.9rem; color: var(--text-secondary);">Authorize an employee to submit purchase requests to your inbox.</p>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <input type="text" id="new-requester-identifier" placeholder="Email or Phone Number" style="margin: 0; flex: 1; min-width: 200px;">
+        <button onclick="addRequester()" class="btn btn-success">Add Requester</button>
+      </div>
+      <div id="add-requester-status" class="status-msg success"></div>
     </div>
 
     <h3>Inbox: Employee Requests</h3>
-    <div id="manager-inbox-list" style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+    <div id="manager-inbox-list">
       Loading inbox...
     </div>
   </div>
@@ -755,26 +1487,30 @@
   <div id="requester-section" class="card" style="display: none;">
     <h2 class="section-title">Request Office Supplies</h2>
 
-    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e9ecef;">
-      <h3 style="margin-top: 0; font-size: 1.1em; color: #495057;">Current Corporate Procurement Policy</h3>
-      <p id="requester-friendly-policy" style="margin: 0; line-height: 1.5; font-style: italic; color: #495057;">Loading policy rules...</p>
-      <button onclick="fetchCurrentPolicy()" style="background: #6c757d; font-size: 0.8em; padding: 4px 8px; margin-top: 10px;">🔄 Refresh Policy</button>
+    <div class="dashboard-panel">
+      <h3 style="margin-top: 0; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <span>Current Corporate Procurement Policy</span>
+        <button onclick="fetchCurrentPolicy()" class="btn btn-outline btn-xs">🔄 Refresh Policy</button>
+      </h3>
+      <p id="requester-friendly-policy" style="margin: 0; line-height: 1.6; font-style: italic; color: var(--text-secondary);">Loading policy rules...</p>
     </div>
 
-    <div style="margin-bottom: 20px; padding: 15px; background: #e9ecef; border-radius: 8px;">
-      <label for="target-manager"><b>Select your Manager:</b></label><br>
-      <select id="target-manager" style="width: 100%; max-width: 300px; padding: 10px; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc;">
-        <option value="">-- Loading Managers... --</option>
-      </select>
-      <p style="font-size: 12px; color: #666; margin-top: 5px;">A manager must add your email/phone to their list before you can send requests to them.</p>
+    <div class="dashboard-panel" style="background-color: var(--bg-canvas);">
+      <div class="field-group" style="margin-bottom: 0;">
+        <label for="target-manager"><b>Select your Manager:</b></label>
+        <select id="target-manager" style="margin-bottom: 0; max-width: 100%;">
+          <option value="">-- Loading Managers... --</option>
+        </select>
+        <p style="font-size: 11px; color: var(--text-muted); margin: 6px 0 0 0;">A manager must add your email/phone to their list before you can send requests to them.</p>
+      </div>
     </div>
 
-    <p>Describe what you need. Our Somnia AI will audit the request against company policies.</p>
-    <textarea id="items" rows="4" placeholder="e.g., 2 ergonomic office chairs, 1 luxury massage chair"></textarea><br><br>
-    <button onclick="submitList()">Send to AI Auditor</button>
+    <p style="margin-bottom: 8px;">Describe what you need. Our Somnia AI will audit the request against company policies.</p>
+    <textarea id="items" rows="4" placeholder="e.g., 2 ergonomic office chairs, 1 luxury massage chair"></textarea>
+    <button onclick="submitList()" class="btn btn-primary" style="margin-top: 10px;">Send to AI Auditor</button>
 
-    <h3 style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px;">My Sent Requests</h3>
-    <div id="requester-status-list" style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+    <h3 style="margin-top: 40px; border-top: 1px solid var(--border-color); padding-top: 24px;">My Sent Requests</h3>
+    <div id="requester-status-list">
       Loading status...
     </div>
   </div>
@@ -782,10 +1518,11 @@
   <!-- Loading Section -->
   <div id="loading-section" class="card" style="display: none; text-align: center;">
     <h3>🤖 AI Agent is auditing your request...</h3>
-    <p>Please wait. The Somnia network requires consensus across multiple nodes, which can take 1-2 minutes.</p>
-    <div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 8px; border: 1px solid #ddd; max-height: 250px; overflow-y: auto; font-family: monospace; font-size: 13px; text-align: left;">
-      <strong>Live Audit Trail:</strong>
-      <div id="audit-logs" style="margin-top: 10px; color: #555;">Waiting for logs...</div>
+    <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto 20px auto;">Please wait. The Somnia network requires consensus across multiple nodes, which can take 1-2 minutes.</p>
+    <div class="audit-spinner"></div>
+    <div class="audit-trail-container">
+      <div class="audit-trail-title">Live Audit Trail</div>
+      <div id="audit-logs" style="color: var(--text-secondary); text-align: left; line-height: 1.5;">Waiting for logs...</div>
     </div>
   </div>
 
