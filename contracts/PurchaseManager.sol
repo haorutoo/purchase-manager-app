@@ -52,7 +52,7 @@ contract PurchaseManager {
         require(msg.value >= deposit, "Insufficient STT deposit");
 
         string memory prompt = string.concat(
-            "Rewrite the following corporate procurement rules to be friendly, welcoming, and encouraging for employees. Avoid sounding harsh, strict, or restrictive while keeping the core constraints clear. Rules:\n",
+            "Rewrite the following corporate procurement rules to be friendly, welcoming, and encouraging for employees. Avoid sounding harsh, strict, or restrictive while keeping the core constraints clear. Do NOT include any introductory or conversational filler (e.g. 'Sure! Here is a friendly rewrite...'). Output ONLY the final rules directly. Rules:\n",
             newRules
         );
 

@@ -76,15 +76,25 @@
           contract.friendlyPolicyRules().catch(() => "Not Set")
         ]);
         
+        // Clean the friendly policy rules of any standard LLM conversational intro
+        let cleanedFriendly = friendly;
+        if (cleanedFriendly && cleanedFriendly !== "Not Set") {
+          cleanedFriendly = cleanedFriendly
+            .replace(/^(Sure!|Here's|Here is|Sure,|Alright|Welcoming).*?rewrite.*?:/is, "")
+            .replace(/^(Sure!|Here's|Here is|Sure,|Alright|Welcoming).*?rules.*?:/is, "")
+            .replace(/^(Sure!|Here's|Here is|Sure,|Alright|Welcoming).*?procurement.*?:/is, "")
+            .trim();
+        }
+
         // Update Manager elements
         const currentRulesPre = document.getElementById('current-policy-rules');
         const currentFriendlyPre = document.getElementById('current-friendly-policy');
         if (currentRulesPre) currentRulesPre.innerText = rules;
-        if (currentFriendlyPre) currentFriendlyPre.innerText = friendly;
+        if (currentFriendlyPre) currentFriendlyPre.innerText = cleanedFriendly;
         
         // Update Requester elements
         const requesterFriendlyPre = document.getElementById('requester-friendly-policy');
-        if (requesterFriendlyPre) requesterFriendlyPre.innerText = friendly !== "Not Set" ? friendly : rules;
+        if (requesterFriendlyPre) requesterFriendlyPre.innerText = cleanedFriendly !== "Not Set" ? cleanedFriendly : rules;
         
       } catch (err) {
         console.error("Error fetching policy rules from contract:", err);
