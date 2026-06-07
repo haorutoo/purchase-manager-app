@@ -6,6 +6,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <script type="module">
+    import { firebaseConfig } from "./config.js";
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { 
       getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, 
@@ -17,14 +18,7 @@
     import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
     import { ethers } from "https://esm.sh/ethers@6.7.0";
 
-    const firebaseConfig = {      apiKey: "AIzaSyAuXniNlbJu1KedetTErtpberH5Hk4zfso",
-      authDomain: "somnia-purchase-manager.firebaseapp.com",
-      projectId: "somnia-purchase-manager",
-      storageBucket: "somnia-purchase-manager.firebasestorage.app",
-      messagingSenderId: "37142484496",
-      appId: "1:37142484496:web:69efc635085a46465fdc95",
-      measurementId: "G-VG7GE28W0X"
-    };
+
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
